@@ -14,6 +14,6 @@ export interface ImageData {
 }
 
 export type RootStackParamList = {
-  index: undefined;
+  index: number;
   'marker/[id]': { id: string };
 };
