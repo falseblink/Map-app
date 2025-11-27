@@ -12,22 +12,6 @@ const MarkerContext = createContext<MarkerContextType | undefined>(undefined);
 
 export const MarkerProvider = ({ children }: { children: ReactNode }) => {
   const [markers, setMarkers] = useState<MarkerData[]>([
-    // {
-    //   id: "1",
-    //   latitude: 58.00675,
-    //   longitude: 56.18576,
-    //   title: "Ботанический сад",
-    //   description: "Ботанический сад ПГНИУ",
-    //   images: [],
-    // },
-    // {
-    //   id: "2",
-    //   latitude: 58.00858,
-    //   longitude: 56.19081,
-    //   title: "Корпус 5",
-    //   description: "ПГНИУ, корпус №5",
-    //   images: [],
-    // },
   ]);
 
   const updateMarkerImages = (markerId: string, images: ImageData[]) => {
@@ -56,7 +40,7 @@ export const MarkerProvider = ({ children }: { children: ReactNode }) => {
 export const useMarkers = () => {
   const context = useContext(MarkerContext);
   if (!context) {
-    throw new Error("useMarkers must be used within MarkerProvider");
+    throw new Error("useMarkers должен использоваться в рамках MarkerProvider");
   }
   return context;
 };

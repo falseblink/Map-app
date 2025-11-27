@@ -1,19 +1,36 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Button, StyleSheet, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ImageData } from "../../types";
 import ImageList from "../../components/ImageList";
-import { useMarkers } from "../../components/MarkerContext";
+import { useDatabase } from "@/contexts/DatabaseContext"; // Только из контекста!
 
 export default function MarkerDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  const { markers, updateMarkerImages } = useMarkers();
-  
+  const { markers, addImage, deleteImage, deleteMarker } = useDatabase();
+
   const marker = markers.find(m => m.id === id) || null;
+
+  const handleDelete = async () => {
+    Alert.alert(
+      "Удаление маркера",
+      "Вы уверены, что хотите удалить этот маркер?",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить",
+          style: "destructive",
+          onPress: async () => {
+            await deleteMarker(id);
+            router.back();
+          },
+        },
+      ]
+    );
+  };
 
   const pickImage = async () => {
     try {
@@ -23,22 +40,20 @@ export default function MarkerDetail() {
         quality: 1,
       });
       if (!result.canceled && result.assets.length > 0 && marker) {
-        const image: ImageData = {
-          uri: result.assets[0].uri,
-          name: result.assets[0].fileName ?? result.assets[0].uri.split("/").pop() ?? "",
-          id: Date.now().toString(),
-        };
-        updateMarkerImages(marker.id, [...marker.images, image]);
+        const asset = result.assets[0];
+        await addImage(
+          marker.id,
+          asset.uri,
+          asset.fileName ?? asset.uri.split("/").pop() ?? ""
+        );
       }
     } catch {
       setError("Ошибка выбора изображения");
     }
   };
 
-  const removeImage = (imageId: string) => {
-    if (!marker) return;
-    const newImages = marker.images.filter(img => img.id !== imageId);
-    updateMarkerImages(marker.id, newImages);
+  const removeImage = async (imageId: string) => {
+    await deleteImage(imageId);
   };
 
   if (!id) return <Text>Маркер не найден</Text>;
@@ -54,6 +69,7 @@ export default function MarkerDetail() {
       </Text>
       <Button title="Добавить изображение" onPress={pickImage} />
       <ImageList images={marker.images} onRemove={removeImage} />
+      <Button title="Удалить маркер" color="red" onPress={handleDelete} />
     </View>
   );
 }

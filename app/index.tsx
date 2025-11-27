@@ -1,16 +1,16 @@
 import React from "react";
 import { useRouter } from "expo-router";
 import Map from "../components/Map";
-import { useMarkers } from "../components/MarkerContext";
 import { MarkerData } from "../types";
+import { useDatabase } from "@/contexts/DatabaseContext";
 
 export default function Index() {
-  const { markers, setMarkers } = useMarkers();
+  const { markers, addMarker, isLoading } = useDatabase();
   const router = useRouter();
 
-  const handleAddMarker = (marker: MarkerData) => {
-    setMarkers(prev => [...prev, marker]);
-  };
+  // const handleAddMarker = (marker: MarkerData) => {
+  //   addMarker(marker.latitude, marker.longitude, marker.title, marker.description);
+  // }
 
   const handleMarkerPress = (id: string) => {
     router.push(`/marker/${id}`);
@@ -18,9 +18,6 @@ export default function Index() {
 
   return (
     <Map
-      markers={markers}
-      loading={false}
-      onAddMarker={handleAddMarker}
       onMarkerPress={handleMarkerPress}
     />
   );

@@ -9,18 +9,10 @@ import {
   Platform,
 } from "react-native";
 import MapView, { Marker, LongPressEvent } from "react-native-maps";
-import { useMarkers } from "../components/MarkerContext";
-import { MarkerData } from "@/types";
+import { useDatabase } from "../contexts/DatabaseContext";
 
-interface MapProps {
-  markers: MarkerData[];
-  loading?: boolean;
-  onAddMarker: (marker: MarkerData) => void;
-  onMarkerPress: (id: string) => void;
-}
-
-export default function Map({ onMarkerPress }: MapProps) {
-  const { markers, setMarkers} = useMarkers();
+export default function Map({ onMarkerPress }: { onMarkerPress: (id: string) => void }) {
+  const { markers, addMarker } = useDatabase();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [newMarkerCoords, setNewMarkerCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -35,30 +27,25 @@ export default function Map({ onMarkerPress }: MapProps) {
     setModalVisible(true);
   };
 
-  const saveMarker = () => {
+  const saveMarker = async () => {
     if (!newMarkerCoords) return;
-    const newMarker = {
-      id: Date.now().toString(),
-      latitude: newMarkerCoords.latitude,
-      longitude: newMarkerCoords.longitude,
-      title: title.trim() === "" ? "Без названия" : title.trim(),
-      description: description.trim() === "" ? "Без описания" : description.trim(),
-      images: [],
-    };
-    setMarkers((prev) => [...prev, newMarker]);
+    await addMarker(
+      newMarkerCoords.latitude,
+      newMarkerCoords.longitude,
+      title.trim() === "" ? "Без названия" : title.trim(),
+      description.trim() === "" ? "Без описания" : description.trim()
+    );
     setModalVisible(false);
   };
 
-  const cancel = () => {
-    setModalVisible(false);
-  };
+  const cancel = () => setModalVisible(false);
 
   return (
     <View style={styles.container}>
       <MapView
         style={styles.map}
         initialRegion={{
-          latitude: 58.009368, 
+          latitude: 58.009368,
           longitude: 56.207857,
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
@@ -78,17 +65,10 @@ export default function Map({ onMarkerPress }: MapProps) {
           />
         ))}
       </MapView>
-
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={cancel} 
-      >
+      <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={cancel}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Новый маркер</Text>
-
             <TextInput
               placeholder="Название"
               style={styles.input}
@@ -103,7 +83,6 @@ export default function Map({ onMarkerPress }: MapProps) {
               onChangeText={setDescription}
               multiline
             />
-
             <View style={styles.buttonRow}>
               <Button title="Отмена" onPress={cancel} color="#888" />
               <Button title="Сохранить" onPress={saveMarker} />
@@ -118,7 +97,6 @@ export default function Map({ onMarkerPress }: MapProps) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: Platform.OS === "ios" ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.5)",
