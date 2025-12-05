@@ -1,3 +1,4 @@
+import { MarkerData } from '@/types';
 import * as Location from 'expo-location';
 
 export const PROXIMITY_THRESHOLD = 100;
@@ -94,19 +95,29 @@ export const isCloseToMarker = (
 };
 
 export const checkProximityToMarkers = (
-  userLocation: Location.LocationObject,
-  markers: Array<{ id: string; latitude: number; longitude: number }>,
-  threshold: number = PROXIMITY_THRESHOLD
+  location: Location.LocationObject, 
+  markers: MarkerData[]
 ): string[] => {
-  const nearbyMarkers: string[] = [];
+  const nearby: string[] = [];
+  
   
   markers.forEach(marker => {
-    if (isCloseToMarker(userLocation, marker, threshold)) {
-      nearbyMarkers.push(marker.id);
+    const distance = calculateDistance(
+      location.coords.latitude,
+      location.coords.longitude,
+      marker.latitude,
+      marker.longitude
+    );
+    
+    const isNearby = distance < 50; 
+    
+    if (isNearby) {
+      nearby.push(marker.id);
     }
   });
   
-  return nearbyMarkers;
+  console.log(`Итоговый список близких маркеров: [${nearby.join(', ')}]`);
+  return nearby;
 };
 
 export const formatCoordinates = (coords: Location.LocationObjectCoords): string => {

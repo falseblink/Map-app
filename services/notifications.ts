@@ -75,7 +75,7 @@ class NotificationManager {
     try {
       const notification = this.activeNotifications.get(markerId);
       if (notification) {
-        await Notifications.cancelScheduledNotificationAsync(notification.notificationId);
+        await Notifications.dismissNotificationAsync(notification.notificationId);
         this.activeNotifications.delete(markerId);
         console.log(`Уведомление удалено для маркера ${markerId}`);
       }
@@ -96,7 +96,7 @@ class NotificationManager {
   async clearAllNotifications(): Promise<void> {
     try {
       const promises = Array.from(this.activeNotifications.values()).map(notification =>
-        Notifications.cancelScheduledNotificationAsync(notification.notificationId)
+        Notifications.dismissNotificationAsync(notification.notificationId)
       );
       
       await Promise.all(promises);

@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -33,7 +33,6 @@ export default function Map({ markers, onAddMarker, onMarkerPress }: MapProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
-  // Location tracking states
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
@@ -46,6 +45,11 @@ export default function Map({ markers, onAddMarker, onMarkerPress }: MapProps) {
   });
 
   const [nearbyMarkers, setNearbyMarkers] = useState<string[]>([]);
+  const nearbyMarkersRef = useRef<string[]>([]);
+  
+  useEffect(() => {
+    nearbyMarkersRef.current = nearbyMarkers;
+  }, [nearbyMarkers]);
 
   useEffect(() => {
     requestLocationPermissions()
@@ -88,32 +92,45 @@ export default function Map({ markers, onAddMarker, onMarkerPress }: MapProps) {
   };
 
   const handleProximityChange = async (newNearbyMarkers: string[]) => {
-    setNearbyMarkers(newNearbyMarkers);
+  console.log('=== ОБРАБОТКА ИЗМЕНЕНИЯ БЛИЗОСТИ ===');
+  console.log('Текущие nearbyMarkers:', nearbyMarkers);
+  console.log('Новые nearbyMarkers:', newNearbyMarkers);
+  
+  const currentNearbyMarkers = [...nearbyMarkersRef.current];
+  
+  console.log('Сравнение массивов:');
+  console.log('JSON.stringify(current) === JSON.stringify(new):', 
+    JSON.stringify(currentNearbyMarkers.sort()) === JSON.stringify(newNearbyMarkers.sort()));
+  
+  setNearbyMarkers(newNearbyMarkers);
 
-    for (const markerId of newNearbyMarkers) {
-      if (!nearbyMarkers.includes(markerId)) {
-        const marker = markers.find(m => m.id === markerId);
-        if (marker) {
-          try {
-            await notificationManager.showNotification(marker);
-            console.log(`Уведомление отправлено для маркера: ${marker.title}`);
-          } catch (error) {
-            console.error('Ошибка показа уведомления:', error);
-          }
-        }
+  const addedMarkers = newNearbyMarkers.filter(id => !currentNearbyMarkers.includes(id));
+  
+  const removedMarkers = currentNearbyMarkers.filter(id => !newNearbyMarkers.includes(id));
+
+  console.log('Добавленные маркеры:', addedMarkers);
+  console.log('Удаленные маркеры:', removedMarkers);
+
+  for (const markerId of addedMarkers) {
+    const marker = markers.find(m => m.id === markerId);
+    if (marker) {
+      try {
+        await notificationManager.showNotification(marker);
+      } catch (error) {
+        console.error('Ошибка показа уведомления:', error);
       }
     }
+  }
 
-    for (const markerId of nearbyMarkers) {
-      if (!newNearbyMarkers.includes(markerId)) {
-        try {
-          await notificationManager.removeNotification(markerId);
-        } catch (error) {
-          console.error('Ошибка удаления уведомления:', error);
-        }
-      }
+  for (const markerId of removedMarkers) {
+    try {
+      await notificationManager.removeNotification(markerId);
+    } catch (error) {
+      console.error('Ошибка удаления уведомления:', error);
     }
-  };
+  }
+  
+};
 
   const handleLongPress = (e: LongPressEvent) => {
     const coords = e.nativeEvent.coordinate;
@@ -269,7 +286,6 @@ const styles = StyleSheet.create({
   },
   nearbyMarker: {
     backgroundColor: '#FF3B30',
-    transform: [{ scale: 1.2 }],
   },
   nearbyMarkerText: {
     fontSize: 16,
