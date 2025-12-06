@@ -92,45 +92,44 @@ export default function Map({ markers, onAddMarker, onMarkerPress }: MapProps) {
   };
 
   const handleProximityChange = async (newNearbyMarkers: string[]) => {
-  console.log('=== ОБРАБОТКА ИЗМЕНЕНИЯ БЛИЗОСТИ ===');
-  console.log('Текущие nearbyMarkers:', nearbyMarkers);
-  console.log('Новые nearbyMarkers:', newNearbyMarkers);
-  
-  const currentNearbyMarkers = [...nearbyMarkersRef.current];
-  
-  console.log('Сравнение массивов:');
-  console.log('JSON.stringify(current) === JSON.stringify(new):', 
-    JSON.stringify(currentNearbyMarkers.sort()) === JSON.stringify(newNearbyMarkers.sort()));
-  
-  setNearbyMarkers(newNearbyMarkers);
+    console.log('=== ОБРАБОТКА ИЗМЕНЕНИЯ БЛИЗОСТИ ===');
+    console.log('Текущие nearbyMarkers:', nearbyMarkers);
+    console.log('Новые nearbyMarkers:', newNearbyMarkers);
+    
+    const currentNearbyMarkers = [...nearbyMarkersRef.current];
+    
+    console.log('Сравнение массивов:');
+    console.log('JSON.stringify(current) === JSON.stringify(new):', 
+      JSON.stringify(currentNearbyMarkers.sort()) === JSON.stringify(newNearbyMarkers.sort()));
+    
+    setNearbyMarkers(newNearbyMarkers);
 
-  const addedMarkers = newNearbyMarkers.filter(id => !currentNearbyMarkers.includes(id));
-  
-  const removedMarkers = currentNearbyMarkers.filter(id => !newNearbyMarkers.includes(id));
+    const addedMarkers = newNearbyMarkers.filter(id => !currentNearbyMarkers.includes(id));
+    
+    const removedMarkers = currentNearbyMarkers.filter(id => !newNearbyMarkers.includes(id));
 
-  console.log('Добавленные маркеры:', addedMarkers);
-  console.log('Удаленные маркеры:', removedMarkers);
+    console.log('Добавленные маркеры:', addedMarkers);
+    console.log('Удаленные маркеры:', removedMarkers);
 
-  for (const markerId of addedMarkers) {
-    const marker = markers.find(m => m.id === markerId);
-    if (marker) {
-      try {
-        await notificationManager.showNotification(marker);
-      } catch (error) {
-        console.error('Ошибка показа уведомления:', error);
+    for (const markerId of addedMarkers) {
+      const marker = markers.find(m => m.id === markerId);
+      if (marker) {
+        try {
+          await notificationManager.showNotification(marker);
+        } catch (error) {
+          console.error('Ошибка показа уведомления:', error);
+        }
       }
     }
-  }
 
-  for (const markerId of removedMarkers) {
-    try {
-      await notificationManager.removeNotification(markerId);
-    } catch (error) {
-      console.error('Ошибка удаления уведомления:', error);
+    for (const markerId of removedMarkers) {
+      try {
+        await notificationManager.removeNotification(markerId);
+      } catch (error) {
+        console.error('Ошибка удаления уведомления:', error);
+      }
     }
-  }
-  
-};
+  };
 
   const handleLongPress = (e: LongPressEvent) => {
     const coords = e.nativeEvent.coordinate;

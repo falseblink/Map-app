@@ -1,7 +1,7 @@
 import { MarkerData } from '@/types';
 import * as Location from 'expo-location';
 
-export const PROXIMITY_THRESHOLD = 100;
+export const PROXIMITY_THRESHOLD = 50;
 
 export const requestLocationPermissions = async (): Promise<boolean> => {
   try {

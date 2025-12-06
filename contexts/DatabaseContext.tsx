@@ -1,14 +1,14 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
-import {
-  addMarker as dbAddMarker,
-  deleteMarker as dbDeleteMarker,
-  getMarkers as dbGetMarkers,
-  addImage as dbAddImage,
-  deleteImage as dbDeleteImage,
-  getMarkerImages as dbGetMarkerImages,
-} from "../database/operations";
-import { MarkerData, ImageData } from "../types";
 import { initDatabase } from "@/database/schema";
+import React, { createContext, ReactNode, useEffect, useState } from "react";
+import {
+  addImage as dbAddImage,
+  addMarker as dbAddMarker,
+  deleteImage as dbDeleteImage,
+  deleteMarker as dbDeleteMarker,
+  getMarkerImages as dbGetMarkerImages,
+  getMarkers as dbGetMarkers,
+} from "../database/operations";
+import { MarkerData } from "../types";
 
 interface DatabaseContextType {
   markers: MarkerData[];
@@ -30,43 +30,69 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const loadMarkersWithImages = async () => {
     try {
+      console.log(' DatabaseContext: Загрузка маркеров из базы данных...');
       const loadedMarkers = await dbGetMarkers();
+      console.log(' DatabaseContext: Загруженные маркеры:', loadedMarkers);
+      
       for (const marker of loadedMarkers) {
         marker.images = await dbGetMarkerImages(Number(marker.id));
       }
+      
       setMarkers(loadedMarkers);
+      console.log('DatabaseContext: Маркеры успешно загружены и обновлены:', loadedMarkers.length);
     } catch (err) {
+      console.error(' DatabaseContext: Ошибка загрузки маркеров:', err);
       setError(err as Error);
     }
   };
 
   const refreshMarkers = async () => {
+    console.log(' DatabaseContext: Начинаем обновление маркеров');
     setIsLoading(true);
     await loadMarkersWithImages();
     setIsLoading(false);
+    console.log(' DatabaseContext: Обновление маркеров завершено');
   };
 
   useEffect(() => {
+    console.log('🚀 DatabaseContext: Инициализация контекста');
     initDatabase()
-      .then(() => refreshMarkers())
-      .catch(err => setError(err as Error));
+      .then(() => {
+        console.log('🚀 DatabaseContext: База данных инициализирована, загружаем маркеры');
+        refreshMarkers();
+      })
+      .catch(err => {
+        console.error('🚀 DatabaseContext: Ошибка инициализации базы данных:', err);
+        setError(err as Error);
+        setIsLoading(false);
+      });
   }, []);
 
   const addMarker = async (latitude: number, longitude: number, title?: string, description?: string) => {
     try {
+      console.log(' DatabaseContext: Попытка добавления маркера:', { latitude, longitude, title, description });
       await dbAddMarker(latitude, longitude, title, description);
+      console.log(' DatabaseContext: Маркер добавлен в базу данных');
       await refreshMarkers();
+      console.log(' DatabaseContext: Маркеры обновлены после добавления');
     } catch (err) {
+      console.error(' DatabaseContext: Ошибка добавления маркера:', err);
       setError(err as Error);
+      throw err; 
     }
   };
 
   const deleteMarker = async (id: string) => {
     try {
+      console.log(' DatabaseContext: Попытка удаления маркера:', id);
       await dbDeleteMarker(id);
+      console.log(' DatabaseContext: Маркер удален из базы данных');
       await refreshMarkers();
+      console.log(' DatabaseContext: Маркеры обновлены после удаления');
     } catch (err) {
+      console.error(' DatabaseContext: Ошибка удаления маркера:', err);
       setError(err as Error);
+      throw err; 
     }
   };
 
